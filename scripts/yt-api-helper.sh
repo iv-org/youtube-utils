@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC2236
 
 
 print_help()
@@ -47,7 +48,7 @@ query_with_default()
 	default="$2"
 
 	printf "\n%s [%s]: " "$prompt" "$default" >&2
-	read data
+	read -r data
 
 	if [ -z "$data" ]; then
 		echo "$default"
@@ -62,7 +63,7 @@ query_with_error()
 	error_message="$2"
 
 	printf "\n%s []: " "$prompt" >&2
-	read data
+	read -r data
 
 	if [ -z "$data" ]; then
 		echo "Error: $error_message"
@@ -111,7 +112,7 @@ while :; do
 		-c|--client)
 			shift
 
-			if [ $# -eq 0 ] || $(is_arg "$1"); then
+			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -c/--client"
 				return 2
 			fi
@@ -122,7 +123,7 @@ while :; do
 		-d|--data)
 			shift
 
-			if [ $# -eq 0 ] || $(is_arg "$1"); then
+			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -d/--data"
 				return 2
 			fi
@@ -133,7 +134,7 @@ while :; do
 		-e|--endpoint)
 			shift
 
-			if [ $# -eq 0 ] || $(is_arg "$1"); then
+			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -e/--endpoint"
 				return 2
 			fi
@@ -153,7 +154,7 @@ while :; do
 		-o|--output)
 			shift
 
-			if [ $# -eq 0 ] || $(is_arg "$1"); then
+			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -o/--output"
 				return 2
 			fi
@@ -183,13 +184,13 @@ if [ ! -z "$data" ]; then
 	fi
 
 	# Can't pass client in non-interactive mode (must be part of data)
-	if [ ! -z $client_option ]; then
+	if [ ! -z "$client_option" ]; then
 		echo "Error: -c/--client can't be used with -d/--data"
 		return 2
 	fi
 
 	# Endpoint must be given if non-interactive mode
-	if [ -z $endpoint_option ]; then
+	if [ -z "$endpoint_option" ]; then
 		echo "Error: In non-interactive mode, an endpoint must be passed with -e/--endpoint"
 		return 2
 	fi
@@ -203,9 +204,9 @@ fi
 
 if [ -z "$output" ] && [ $interactive = true ]; then
 	printf "\nIt is recommended to use --output in interactive mode.\nContinue? [y/N]: "
-	read confirm
+	read -r confirm
 
-	if [ -z $confirm ]; then confirm="n"; fi
+	if [ -z "$confirm" ]; then confirm="n"; fi
 
 	case $confirm in
 		[Yy]|[Yy][Ee][Ss]) ;;
@@ -218,7 +219,7 @@ fi
 # Client selection
 #
 
-if [ -z $client_option ]; then
+if [ -z "$client_option" ]; then
 	client_option=$(query_with_default "Enter a client to use" "web")
 fi
 
@@ -247,7 +248,7 @@ case $client_option in
 	;;
 
 	android)
-		apikey= "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w"
+		apikey="AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w"
 		client_name="ANDROID"
 		client_vers="16.20"
 	;;
@@ -271,9 +272,8 @@ esac
 # Endpoint selection
 #
 
-if [ -z $endpoint_option ]; then
-	printf "Enter an endpoint to request []: "
-	read endpoint_option
+if [ -z "$endpoint_option" ]; then
+	endpoint_option=$(query_with_default "Enter an endpoint to request" "")
 fi
 
 case $endpoint_option in
@@ -361,7 +361,7 @@ then
 	browse|player|search)
 		params=$(query_with_default "Enter optional parameters (base64-encoded protobuf)" "")
 
-		if [ ! -z $params ]; then
+		if [ ! -z "$params" ]; then
 			partial_data="${partial_data},\"params\":\"${params}\""
 		fi
 	;;
