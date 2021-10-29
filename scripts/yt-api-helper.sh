@@ -67,7 +67,7 @@ query_with_error()
 
 	if [ -z "$data" ]; then
 		echo "Error: $error_message"
-		return 1
+		exit 1
 	else
 		echo "$data"
 	fi
@@ -114,7 +114,7 @@ while :; do
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -c/--client"
-				return 2
+				exit 2
 			fi
 
 			client_option=$1
@@ -125,7 +125,7 @@ while :; do
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -d/--data"
-				return 2
+				exit 2
 			fi
 
 			data=$1
@@ -136,7 +136,7 @@ while :; do
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -e/--endpoint"
-				return 2
+				exit 2
 			fi
 
 			endpoint_option=$1
@@ -144,7 +144,7 @@ while :; do
 
 		-h|--help)
 			print_help
-			return 0
+			exit 0
 		;;
 
 		-i|--interactive)
@@ -156,7 +156,7 @@ while :; do
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -o/--output"
-				return 2
+				exit 2
 			fi
 
 			output="$1"
@@ -164,7 +164,7 @@ while :; do
 
 		*)
 			echo "Error: unknown argument '$1'"
-			return 2
+			exit 2
 		;;
 	esac
 
@@ -180,26 +180,26 @@ if [ ! -z "$data" ]; then
 	# Can't pass data in interactive mode
 	if [ $interactive = true ]; then
 		echo "Error: -d/--data can't be used with -i/--interactive"
-		return 2
+		exit 2
 	fi
 
 	# Can't pass client in non-interactive mode (must be part of data)
 	if [ ! -z "$client_option" ]; then
 		echo "Error: -c/--client can't be used with -d/--data"
-		return 2
+		exit 2
 	fi
 
 	# Endpoint must be given if non-interactive mode
 	if [ -z "$endpoint_option" ]; then
 		echo "Error: In non-interactive mode, an endpoint must be passed with -e/--endpoint"
-		return 2
+		exit 2
 	fi
 fi
 
 if [ -z "$data" ] && [ $interactive = false ]; then
 	# Data must be given if non-interactive mode
 	echo "Error: In non-interactive mode, data must be passed with -d/--data"
-	return 2
+	exit 2
 fi
 
 if [ -z "$output" ] && [ $interactive = true ]; then
@@ -210,7 +210,7 @@ if [ -z "$output" ] && [ $interactive = true ]; then
 
 	case $confirm in
 		[Yy]|[Yy][Ee][Ss]) ;;
-		*) return 0;;
+		*) exit 0;;
 	esac
 fi
 
@@ -226,7 +226,7 @@ fi
 case $client_option in
 	help)
 		print_clients
-		return 0
+		exit 0
 	;;
 
 	web)
@@ -263,7 +263,7 @@ case $client_option in
 		echo "Error: Unknown client '$client_option'"
 		echo ""
 		print_clients
-		return 1
+		exit 1
 	;;
 esac
 
@@ -279,7 +279,7 @@ fi
 case $endpoint_option in
 	help)
 		print_endpoints
-		return 0
+		exit 0
 		;;
 
 	browse)
@@ -345,7 +345,7 @@ case $endpoint_option in
 		echo "Error: Unknown endpoint '$endpoint_option'"
 		echo ""
 		print_clients
-		return 1
+		exit 1
 	;;
 esac
 
