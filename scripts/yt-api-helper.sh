@@ -17,6 +17,8 @@ print_help()
 	echo "  -i,--interactive  Run in interactive mode"
 	echo "  -o,--output       Print output to file instead of stdout"
 	echo ""
+	echo "     --debug        Show what is sent to the API"
+	echo ""
 }
 
 print_clients()
@@ -47,7 +49,7 @@ query_with_default()
 	prompt="$1"
 	default="$2"
 
-	printf "\n%s [%s]: " "$prompt" "$default" >&2
+	printf "%s [%s]: " "$prompt" "$default" >&2
 	read -r data
 
 	if [ -z "$data" ]; then
@@ -62,7 +64,7 @@ query_with_error()
 	prompt="$1"
 	error_message="$2"
 
-	printf "\n%s []: " "$prompt" >&2
+	printf "%s []: " "$prompt" >&2
 	read -r data
 
 	if [ -z "$data" ]; then
@@ -83,6 +85,7 @@ is_arg()
 		-h|--help)        true;;
 		-i|--interactive) true;;
 		-o|--output)      true;;
+		--debug)          true;;
 		*)                false;;
 	esac
 }
@@ -93,6 +96,7 @@ is_arg()
 #
 
 interactive=false
+debug=false
 
 client_option=""
 endpoint_option=""
@@ -160,6 +164,10 @@ while :; do
 			fi
 
 			output="$1"
+		;;
+
+		--debug)
+			debug=true
 		;;
 
 		*)
@@ -392,8 +400,12 @@ if [ $interactive = true ]; then
 	data="{\"context\":{\"client\":{$client}},$partial_data}"
 
 	# Basic debug
-	echo "sending:"
-	echo "$data" | sed 's/{/{\n/g; s/}/\n}/g; s/,/,\n/g'
+	if [ $debug = true ]; then
+		echo
+		echo "sending:"
+		echo "$data" | sed 's/{/{\n/g; s/}/\n}/g; s/,/,\n/g'
+		echo
+	fi
 fi
 
 
