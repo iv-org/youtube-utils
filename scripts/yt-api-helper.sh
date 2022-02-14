@@ -5,14 +5,16 @@
 print_help()
 {
 	echo "Usage: yt-api-helper  -i [-c <client>] [-e <endpoint>]"
-	echo "Usage: yt-api-helper  -e <endpoint> -d <data>"
+	echo "Usage: yt-api-helper  -c <client> -e <endpoint> -d <data>"
 	echo ""
 	echo "Options:"
 	echo "  -c,--client       Client to use. Pass 'help' to this option to get"
-	echo "                      the list of supported clients"
+	echo "                      the list of supported clients. Mandatory in"
+	echo "                      non-interactive mode."
 	echo "  -d,--data         Raw data to send to the API"
 	echo "  -e,--endpoint     Youtube endpoint to request. Pass 'help' to this"
-	echo "                      option to get the list of supported endpoints"
+	echo "                      option to get the list of supported endpoints."
+	echo "                      Mandatory in non-interactive mode"
 	echo "  -h,--help         Show this help"
 	echo "  -i,--interactive  Run in interactive mode"
 	echo "  -o,--output       Print output to file instead of stdout"
@@ -197,9 +199,10 @@ if [ ! -z "$data" ]; then
 		exit 2
 	fi
 
-	# Can't pass client in non-interactive mode (must be part of data)
-	if [ ! -z "$client_option" ]; then
-		echo "Error: -c/--client can't be used with -d/--data"
+	# In non-interactive mode, we still need to pass a client
+	# so the right API key is passed as a URL parameter
+	if [ -z "$client_option" ]; then
+		echo "Error: -c/--client is required to select an API key"
 		exit 2
 	fi
 
