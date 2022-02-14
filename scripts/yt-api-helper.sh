@@ -29,6 +29,7 @@ print_clients()
 	echo "web-mobile"
 	echo "android"
 	echo "android-embed"
+	echo "apple-ios"
 }
 
 print_endpoints()
@@ -100,6 +101,11 @@ debug=false
 
 client_option=""
 endpoint_option=""
+
+client_extra_device_make=""
+client_extra_device_model=""
+client_extra_os_name=""
+client_extra_os_vers=""
 
 data=""
 
@@ -267,6 +273,18 @@ case $client_option in
 		client_vers="16.20"
 	;;
 
+	apple-ios)
+		apikey="AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc"
+		client_name="IOS"
+		client_vers="16.46"
+
+		client_extra_device_make="Apple"
+		client_extra_device_model="iPhone11,8"
+		client_extra_os_vers="15.2.0"
+
+		user_agent="com.google.ios.youtube/16.46 (iPhone11,8; U; CPU iOS 15_2 like Mac OS X; en_GB)"
+	;;
+
 	*)
 		echo "Error: Unknown client '$client_option'"
 		echo ""
@@ -388,7 +406,21 @@ if [ $interactive = true ]; then
 	hl=$(query_with_default "Enter content language (hl)" "en")
 	gl=$(query_with_default "Enter content region (gl)"   "US")
 
-	client="\"clientName\":\"${client_name}\",\"clientVersion\":\"${client_vers}\",\"hl\":\"${hl}\",\"gl\":\"${gl}\""
+	client="\"hl\":\"${hl}\",\"gl\":\"${gl}\""
+
+	client="${client},\"deviceMake\":\"${client_extra_device_make}\""
+	client="${client},\"deviceModel\":\"${client_extra_device_model}\""
+
+	client="${client},\"clientName\":\"${client_name}\""
+	client="${client},\"clientVersion\":\"${client_vers}\""
+
+	if ! [ -z "$client_extra_os_name" ]; then
+		client="${client},\"osName\":\"${client_extra_os_name}\""
+	fi
+
+	if ! [ -z "$client_extra_os_vers" ]; then
+		client="${client},\"osVersion\":\"${client_extra_os_vers}\""
+	fi
 fi
 
 
@@ -413,7 +445,12 @@ url="https://www.youtube.com/${endpoint}?key=${apikey}"
 
 # Headers
 hdr_ct='Content-Type: application/json; charset=utf-8'
-hdr_ua='User-Agent: Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0'
+
+if [ -z "$user_agent" ]; then
+	user_agent="Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0"
+fi
+
+hdr_ua="User-Agent: ${user_agent}"
 
 # Default to STDOUT if no output file was given
 if [ -z "$output" ]; then output='-'; fi
