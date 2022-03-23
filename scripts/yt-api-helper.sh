@@ -1,5 +1,8 @@
 #!/bin/sh
-# shellcheck disable=SC2236
+# shellcheck disable=SC2236,SC2237
+#
+# ^ Allow the use of `! -z` and `! [ -z]` as those are
+# more intuitive than `-n`
 
 
 print_help()
