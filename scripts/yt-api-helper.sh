@@ -1,21 +1,28 @@
 #!/bin/sh
-# shellcheck disable=SC2236
+# shellcheck disable=SC2236,SC2237
+#
+# ^ Allow the use of `! -z` and `! [ -z]` as those are
+# more intuitive than `-n`
 
 
 print_help()
 {
 	echo "Usage: yt-api-helper  -i [-c <client>] [-e <endpoint>]"
-	echo "Usage: yt-api-helper  -e <endpoint> -d <data>"
+	echo "Usage: yt-api-helper  -c <client> -e <endpoint> -d <data>"
 	echo ""
 	echo "Options:"
 	echo "  -c,--client       Client to use. Pass 'help' to this option to get"
-	echo "                      the list of supported clients"
+	echo "                      the list of supported clients. Mandatory in"
+	echo "                      non-interactive mode."
 	echo "  -d,--data         Raw data to send to the API"
 	echo "  -e,--endpoint     Youtube endpoint to request. Pass 'help' to this"
-	echo "                      option to get the list of supported endpoints"
+	echo "                      option to get the list of supported endpoints."
+	echo "                      Mandatory in non-interactive mode"
 	echo "  -h,--help         Show this help"
 	echo "  -i,--interactive  Run in interactive mode"
 	echo "  -o,--output       Print output to file instead of stdout"
+	echo ""
+	echo "     --debug        Show what is sent to the API"
 	echo ""
 }
 
@@ -27,6 +34,7 @@ print_clients()
 	echo "web-mobile"
 	echo "android"
 	echo "android-embed"
+	echo "apple-ios"
 }
 
 print_endpoints()
@@ -47,7 +55,7 @@ query_with_default()
 	prompt="$1"
 	default="$2"
 
-	printf "\n%s [%s]: " "$prompt" "$default" >&2
+	printf "%s [%s]: " "$prompt" "$default" >&2
 	read -r data
 
 	if [ -z "$data" ]; then
@@ -62,7 +70,7 @@ query_with_error()
 	prompt="$1"
 	error_message="$2"
 
-	printf "\n%s []: " "$prompt" >&2
+	printf "%s []: " "$prompt" >&2
 	read -r data
 
 	if [ -z "$data" ]; then
@@ -83,6 +91,7 @@ is_arg()
 		-h|--help)        true;;
 		-i|--interactive) true;;
 		-o|--output)      true;;
+		--debug)          true;;
 		*)                false;;
 	esac
 }
@@ -93,9 +102,17 @@ is_arg()
 #
 
 interactive=false
+debug=false
 
 client_option=""
 endpoint_option=""
+
+client_extra_device_make=""
+client_extra_device_model=""
+client_extra_os_name=""
+client_extra_os_vers=""
+client_extra_platform=""
+client_extra_form_factor=""
 
 data=""
 
@@ -162,6 +179,10 @@ while :; do
 			output="$1"
 		;;
 
+		--debug)
+			debug=true
+		;;
+
 		*)
 			echo "Error: unknown argument '$1'"
 			exit 2
@@ -183,9 +204,10 @@ if [ ! -z "$data" ]; then
 		exit 2
 	fi
 
-	# Can't pass client in non-interactive mode (must be part of data)
-	if [ ! -z "$client_option" ]; then
-		echo "Error: -c/--client can't be used with -d/--data"
+	# In non-interactive mode, we still need to pass a client
+	# so the right API key is passed as a URL parameter
+	if [ -z "$client_option" ]; then
+		echo "Error: -c/--client is required to select an API key"
 		exit 2
 	fi
 
@@ -257,6 +279,18 @@ case $client_option in
 		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 		client_name="ANDROID_EMBEDDED_PLAYER"
 		client_vers="16.20"
+	;;
+
+	apple-ios)
+		apikey="AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc"
+		client_name="IOS"
+		client_vers="16.46"
+
+		client_extra_device_make="Apple"
+		client_extra_device_model="iPhone11,8"
+		client_extra_os_vers="15.2.0"
+
+		user_agent="com.google.ios.youtube/16.46 (iPhone11,8; U; CPU iOS 15_2 like Mac OS X; en_GB)"
 	;;
 
 	*)
@@ -333,7 +367,7 @@ case $endpoint_option in
 	;;
 
 	resolve)
-		endpoint="navigation/resolve_url"
+		endpoint="/youtubei/v1/navigation/resolve_url"
 
 		if [ $interactive = true ]; then
 			url=$(query_with_error "Enter URL" "URL required")
@@ -380,7 +414,29 @@ if [ $interactive = true ]; then
 	hl=$(query_with_default "Enter content language (hl)" "en")
 	gl=$(query_with_default "Enter content region (gl)"   "US")
 
-	client="\"clientName\":\"${client_name}\",\"clientVersion\":\"${client_vers}\",\"hl\":\"${hl}\",\"gl\":\"${gl}\""
+	client="\"hl\":\"${hl}\",\"gl\":\"${gl}\""
+
+	client="${client},\"deviceMake\":\"${client_extra_device_make}\""
+	client="${client},\"deviceModel\":\"${client_extra_device_model}\""
+
+	client="${client},\"clientName\":\"${client_name}\""
+	client="${client},\"clientVersion\":\"${client_vers}\""
+
+	if ! [ -z "$client_extra_os_name" ]; then
+		client="${client},\"osName\":\"${client_extra_os_name}\""
+	fi
+
+	if ! [ -z "$client_extra_os_vers" ]; then
+		client="${client},\"osVersion\":\"${client_extra_os_vers}\""
+	fi
+
+	if ! [ -z "$client_extra_platform" ]; then
+		client="${client},\"platform\":\"${client_extra_platform}\""
+	fi
+
+	if ! [ -z "$client_extra_form_factor" ]; then
+		client="${client},\"clientFormFactor\":\"${client_extra_form_factor}\""
+	fi
 fi
 
 
@@ -392,8 +448,12 @@ if [ $interactive = true ]; then
 	data="{\"context\":{\"client\":{$client}},$partial_data}"
 
 	# Basic debug
-	echo "sending:"
-	echo "$data" | sed 's/{/{\n/g; s/}/\n}/g; s/,/,\n/g'
+	if [ $debug = true ]; then
+		echo
+		echo "sending:"
+		echo "$data" | sed 's/{/{\n/g; s/}/\n}/g; s/,/,\n/g'
+		echo
+	fi
 fi
 
 
@@ -401,7 +461,12 @@ url="https://www.youtube.com/${endpoint}?key=${apikey}"
 
 # Headers
 hdr_ct='Content-Type: application/json; charset=utf-8'
-hdr_ua='User-Agent: Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0'
+
+if [ -z "$user_agent" ]; then
+	user_agent="Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0"
+fi
+
+hdr_ua="User-Agent: ${user_agent}"
 
 # Default to STDOUT if no output file was given
 if [ -z "$output" ]; then output='-'; fi
