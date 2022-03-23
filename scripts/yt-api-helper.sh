@@ -111,6 +111,8 @@ client_extra_device_make=""
 client_extra_device_model=""
 client_extra_os_name=""
 client_extra_os_vers=""
+client_extra_platform=""
+client_extra_form_factor=""
 
 data=""
 
@@ -426,6 +428,14 @@ if [ $interactive = true ]; then
 
 	if ! [ -z "$client_extra_os_vers" ]; then
 		client="${client},\"osVersion\":\"${client_extra_os_vers}\""
+	fi
+
+	if ! [ -z "$client_extra_platform" ]; then
+		client="${client},\"platform\":\"${client_extra_platform}\""
+	fi
+
+	if ! [ -z "$client_extra_form_factor" ]; then
+		client="${client},\"clientFormFactor\":\"${client_extra_form_factor}\""
 	fi
 fi
 
