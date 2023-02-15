@@ -5,18 +5,20 @@
 # more intuitive than `-n`
 
 
-print_help()
+print_usage()
 {
 	echo "Usage: yt-api-helper  -i [-c <client>] [-e <endpoint>]"
 	echo "Usage: yt-api-helper  -c <client> -e <endpoint> -d <data>"
+}
+
+print_help()
+{
+	print_usage
 	echo ""
 	echo "Options:"
-	echo "  -c,--client       Client to use. Pass 'help' to this option to get"
-	echo "                      the list of supported clients. Mandatory in"
-	echo "                      non-interactive mode."
+	echo "  -c,--client       Client to use. Mandatory in non-interactive mode."
 	echo "  -d,--data         Raw data to send to the API"
-	echo "  -e,--endpoint     Youtube endpoint to request. Pass 'help' to this"
-	echo "                      option to get the list of supported endpoints."
+	echo "  -e,--endpoint     Youtube endpoint to request."
 	echo "                      Mandatory in non-interactive mode"
 	echo "  -h,--help         Show this help"
 	echo "  -i,--interactive  Run in interactive mode"
@@ -24,29 +26,33 @@ print_help()
 	echo ""
 	echo "     --debug        Show what is sent to the API"
 	echo ""
+	print_clients
+	print_endpoints
 }
 
 print_clients()
 {
+	echo ""
 	echo "Available clients:"
-	echo "web"
-	echo "web-embed"
-	echo "web-mobile"
-	echo "android"
-	echo "android-embed"
-	echo "apple-ios"
+	echo " - web"
+	echo " - web-embed"
+	echo " - web-mobile"
+	echo " - android"
+	echo " - android-embed"
+	echo " - apple-ios"
 }
 
 print_endpoints()
 {
+	echo ""
 	echo "Available endpoints:"
-	echo "browse"
-	echo "browse-continuation"
-	echo "next"
-	echo "next-continuation"
-	echo "player"
-	echo "search"
-	echo "resolve"
+	echo " - browse"
+	echo " - browse-continuation"
+	echo " - next"
+	echo " - next-continuation"
+	echo " - player"
+	echo " - search"
+	echo " - resolve"
 }
 
 
@@ -131,6 +137,7 @@ while :; do
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -c/--client"
+				print_usage
 				exit 2
 			fi
 
@@ -142,6 +149,7 @@ while :; do
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -d/--data"
+				print_usage
 				exit 2
 			fi
 
@@ -153,6 +161,7 @@ while :; do
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -e/--endpoint"
+				print_usage
 				exit 2
 			fi
 
@@ -173,6 +182,7 @@ while :; do
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
 				echo "Error: missing argument after -o/--output"
+				print_usage
 				exit 2
 			fi
 
@@ -185,6 +195,7 @@ while :; do
 
 		*)
 			echo "Error: unknown argument '$1'"
+			print_usage
 			exit 2
 		;;
 	esac
@@ -201,6 +212,7 @@ if [ ! -z "$data" ]; then
 	# Can't pass data in interactive mode
 	if [ $interactive = true ]; then
 		echo "Error: -d/--data can't be used with -i/--interactive"
+		print_usage
 		exit 2
 	fi
 
@@ -208,12 +220,14 @@ if [ ! -z "$data" ]; then
 	# so the right API key is passed as a URL parameter
 	if [ -z "$client_option" ]; then
 		echo "Error: -c/--client is required to select an API key"
+		print_usage
 		exit 2
 	fi
 
 	# Endpoint must be given if non-interactive mode
 	if [ -z "$endpoint_option" ]; then
 		echo "Error: In non-interactive mode, an endpoint must be passed with -e/--endpoint"
+		print_usage
 		exit 2
 	fi
 fi
@@ -221,6 +235,7 @@ fi
 if [ -z "$data" ] && [ $interactive = false ]; then
 	# Data must be given if non-interactive mode
 	echo "Error: In non-interactive mode, data must be passed with -d/--data"
+	print_usage
 	exit 2
 fi
 
@@ -242,15 +257,16 @@ fi
 #
 
 if [ -z "$client_option" ]; then
-	client_option=$(query_with_default "Enter a client to use" "web")
+	if [ $interactive = true ]; then
+		print_clients
+		echo ""
+		client_option=$(query_with_default "Enter a client to use" "web")
+	else
+		exit 2
+	fi
 fi
 
 case $client_option in
-	help)
-		print_clients
-		exit 0
-	;;
-
 	web)
 		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 		client_name="WEB"
@@ -295,7 +311,6 @@ case $client_option in
 
 	*)
 		echo "Error: Unknown client '$client_option'"
-		echo ""
 		print_clients
 		exit 1
 	;;
@@ -307,15 +322,16 @@ esac
 #
 
 if [ -z "$endpoint_option" ]; then
-	endpoint_option=$(query_with_default "Enter an endpoint to request" "")
+	if [ $interactive = true ]; then
+		print_endpoints
+		echo ""
+		endpoint_option=$(query_with_default "Enter an endpoint to request" "")
+	else
+		exit 2
+	fi
 fi
 
 case $endpoint_option in
-	help)
-		print_endpoints
-		exit 0
-		;;
-
 	browse)
 		endpoint="youtubei/v1/browse"
 
@@ -377,8 +393,7 @@ case $endpoint_option in
 
 	*)
 		echo "Error: Unknown endpoint '$endpoint_option'"
-		echo ""
-		print_clients
+		print_endpoints
 		exit 1
 	;;
 esac
