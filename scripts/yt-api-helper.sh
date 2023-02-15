@@ -483,8 +483,19 @@ fi
 
 hdr_ua="User-Agent: ${user_agent}"
 
-# Default to STDOUT if no output file was given
-if [ -z "$output" ]; then output='-'; fi
 
 # Run!
-curl --compressed -o "$output" -H "$hdr_ct" -H "$hdr_ua" --data "$data" "$url"
+result=$(
+	curl --compressed -H "$hdr_ct" -H "$hdr_ua" --data "$data" "$url" | \
+	sed -E '
+		/^\s+"(clickT|t)rackingParams.+,$/d
+		s/,?\n\s+"(clickT|t)rackingParams.+$//
+	'
+)
+
+# Default to STDOUT if no output file was given
+if [ -z "$output" ]; then
+	echo "$result"
+else
+	echo "$result" > "$output"
+fi
