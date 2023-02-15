@@ -40,6 +40,8 @@ print_clients()
 	echo " - android"
 	echo " - android-embed"
 	echo " - apple-ios"
+	echo " - tv-html5"
+	echo " - tv-html5-embed"
 }
 
 print_endpoints()
@@ -309,6 +311,19 @@ case $client_option in
 		user_agent="com.google.ios.youtube/16.46 (iPhone11,8; U; CPU iOS 15_2 like Mac OS X; en_GB)"
 	;;
 
+	tv-html5)
+		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+		client_name="TVHTML5"
+		client_vers="7.20220325"
+	;;
+
+	tv-html5-embed)
+		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+		client_name="TVHTML5_SIMPLY_EMBEDDED_PLAYER"
+		client_vers="2.0"
+		screen="EMBED"
+	;;
+
 	*)
 		echo "Error: Unknown client '$client_option'"
 		print_clients
@@ -433,6 +448,10 @@ if [ $interactive = true ]; then
 
 	client="${client},\"deviceMake\":\"${client_extra_device_make}\""
 	client="${client},\"deviceModel\":\"${client_extra_device_model}\""
+
+	if ! [ -z "$screen" ]; then
+		client="${client},\"clientScreen\":\"${screen}\""
+	fi
 
 	client="${client},\"clientName\":\"${client_name}\""
 	client="${client},\"clientVersion\":\"${client_vers}\""
