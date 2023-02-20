@@ -272,43 +272,43 @@ case $client_option in
 	web)
 		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 		client_name="WEB"
-		client_vers="2.20210721.00.00"
+		client_vers="2.20230217.01.00"
 	;;
 
 	web-embed)
 		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 		client_name="WEB_EMBEDDED_PLAYER"
-		client_vers="1.20210721.1.0"
+		client_vers="1.20230217.01.0"
 	;;
 
 	web-mobile)
 		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 		client_name="MWEB"
-		client_vers="2.20210726.08.00"
+		client_vers="2.20230216.06.00"
 	;;
 
 	android)
 		apikey="AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w"
 		client_name="ANDROID"
-		client_vers="16.20"
+		client_vers="17.31.35"
 	;;
 
 	android-embed)
 		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
 		client_name="ANDROID_EMBEDDED_PLAYER"
-		client_vers="16.20"
+		client_vers="17.31.35"
 	;;
 
 	apple-ios)
 		apikey="AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc"
 		client_name="IOS"
-		client_vers="16.46"
+		client_vers="17.31.4"
 
 		client_extra_device_make="Apple"
 		client_extra_device_model="iPhone11,8"
 		client_extra_os_vers="15.2.0"
 
-		user_agent="com.google.ios.youtube/16.46 (iPhone11,8; U; CPU iOS 15_2 like Mac OS X; en_GB)"
+		user_agent="com.google.ios.youtube/17.31.4 (iPhone11,8; U; CPU iOS 15_2 like Mac OS X; en_GB)"
 	;;
 
 	tv-html5)
