@@ -398,7 +398,7 @@ case $endpoint_option in
 	;;
 
 	resolve)
-		endpoint="/youtubei/v1/navigation/resolve_url"
+		endpoint="youtubei/v1/navigation/resolve_url"
 
 		if [ $interactive = true ]; then
 			url=$(query_with_error "Enter URL" "URL required")
