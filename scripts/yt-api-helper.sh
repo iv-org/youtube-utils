@@ -504,17 +504,18 @@ hdr_ua="User-Agent: ${user_agent}"
 
 
 # Run!
-result=$(
-	curl --compressed -H "$hdr_ct" -H "$hdr_ua" --data "$data" "$url" | \
-	sed -E '
-		/^\s+"(clickT|t)rackingParams.+,$/d
-		s/,?\n\s+"(clickT|t)rackingParams.+$//
-	'
-)
+temp_dl=_curl_$(date '+%s')
 
-# Default to STDOUT if no output file was given
+curl --compressed -H "$hdr_ct" -H "$hdr_ua" --data "$data" "$url" | \
+sed -E '
+	/^\s+"(clickT|t)rackingParams.+,$/d
+	s/,?\n\s+"(clickT|t)rackingParams.+$//
+' > "$temp_dl"
+
+# Print to STDOUT if no output file was given
 if [ -z "$output" ]; then
-	echo "$result"
+	cat "$temp_dl"
+	rm "$temp_dl"
 else
-	echo "$result" > "$output"
+	mv -- "$temp_dl" "$output"
 fi
