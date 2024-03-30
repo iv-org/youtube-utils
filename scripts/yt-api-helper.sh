@@ -361,6 +361,40 @@ make_request_data()
 
 
 #
+# Final command - send request to Youtube
+#
+
+send_request()
+{
+	request_data="$1"
+	output_file="$2"
+
+	url="https://www.youtube.com/${endpoint}?key=${apikey}"
+
+	# Headers
+	hdr_ct='Content-Type: application/json; charset=utf-8'
+	hdr_ua="User-Agent: ${user_agent}"
+
+	# Run!
+	temp_dl=_curl_$(date '+%s')
+
+	curl --compressed -H "$hdr_ct" -H "$hdr_ua" --data "$request_data" "$url" | \
+	sed -E '
+		/^\s+"(clickT|t)rackingParams.+,$/d
+		s/,?\n\s+"(clickT|t)rackingParams.+$//
+	' > "$temp_dl"
+
+	# Print to STDOUT if no output file was given
+	if [ -z "$output_file" ]; then
+		cat "$temp_dl"
+		rm "$temp_dl"
+	else
+		mv -- "$temp_dl" "$output_file"
+	fi
+}
+
+
+#
 # Parameters init
 #
 
@@ -542,26 +576,4 @@ if [ $interactive = true ]; then
 	data=$(make_request_data)
 fi
 
-
-url="https://www.youtube.com/${endpoint}?key=${apikey}"
-
-# Headers
-hdr_ct='Content-Type: application/json; charset=utf-8'
-hdr_ua="User-Agent: ${user_agent}"
-
-# Run!
-temp_dl=_curl_$(date '+%s')
-
-curl --compressed -H "$hdr_ct" -H "$hdr_ua" --data "$data" "$url" | \
-sed -E '
-	/^\s+"(clickT|t)rackingParams.+,$/d
-	s/,?\n\s+"(clickT|t)rackingParams.+$//
-' > "$temp_dl"
-
-# Print to STDOUT if no output file was given
-if [ -z "$output" ]; then
-	cat "$temp_dl"
-	rm "$temp_dl"
-else
-	mv -- "$temp_dl" "$output"
-fi
+send_request "$data" "$output"
