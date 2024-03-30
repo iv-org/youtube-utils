@@ -7,54 +7,64 @@
 
 print_usage()
 {
-	echo "Usage: yt-api-helper  -i [-c <client>] [-e <endpoint>]"
-	echo "Usage: yt-api-helper  -c <client> -e <endpoint> -d <data>"
+	(
+		echo "Usage: yt-api-helper  -i [-c <client>] [-e <endpoint>]"
+		echo "Usage: yt-api-helper  -c <client> -e <endpoint> -d <data>"
+	) >&2
 }
 
 print_help()
 {
 	print_usage
-	echo ""
-	echo "Options:"
-	echo "  -c,--client       Client to use. Mandatory in non-interactive mode."
-	echo "  -d,--data         Raw data to send to the API"
-	echo "  -e,--endpoint     Youtube endpoint to request."
-	echo "                      Mandatory in non-interactive mode"
-	echo "  -h,--help         Show this help"
-	echo "  -i,--interactive  Run in interactive mode"
-	echo "  -o,--output       Print output to file instead of stdout"
-	echo ""
-	echo "     --debug        Show what is sent to the API"
-	echo ""
+
+	(
+		echo ""
+		echo "Options:"
+		echo "  -c,--client       Client to use. Mandatory in non-interactive mode."
+		echo "  -d,--data         Raw data to send to the API"
+		echo "  -e,--endpoint     Youtube endpoint to request."
+		echo "                      Mandatory in non-interactive mode"
+		echo "  -h,--help         Show this help"
+		echo "  -i,--interactive  Run in interactive mode"
+		echo "  -o,--output       Print output to file instead of stdout"
+		echo ""
+		echo "     --debug        Show what is sent to the API"
+		echo ""
+	) >&2
+
 	print_clients
 	print_endpoints
 }
 
 print_clients()
 {
-	echo ""
-	echo "Available clients:"
-	echo " - web"
-	echo " - web-embed"
-	echo " - web-mobile"
-	echo " - android"
-	echo " - android-embed"
-	echo " - apple-ios"
-	echo " - tv-html5"
-	echo " - tv-html5-embed"
+	(
+		echo ""
+		echo "Available clients:"
+		echo " - web"
+		echo " - web-embed"
+		echo " - web-mobile"
+		echo " - android"
+		echo " - android-embed"
+		echo " - apple-ios"
+		echo " - tv-html5"
+		echo " - tv-html5-embed"
+	) >&2
 }
 
 print_endpoints()
 {
-	echo ""
-	echo "Available endpoints:"
-	echo " - browse"
-	echo " - browse-continuation"
-	echo " - next"
-	echo " - next-continuation"
-	echo " - player"
-	echo " - search"
-	echo " - resolve"
+	(
+		echo ""
+		echo "Available endpoints:"
+		echo " - browse"
+		echo " - browse-continuation"
+		echo " - next"
+		echo " - next-continuation"
+		echo " - player"
+		echo " - search"
+		echo " - resolve"
+	) >&2
 }
 
 
@@ -82,7 +92,7 @@ query_with_error()
 	read -r data
 
 	if [ -z "$data" ]; then
-		echo "Error: $error_message"
+		error_msg "$error_message"
 		exit 1
 	else
 		echo "$data"
@@ -102,6 +112,12 @@ is_arg()
 		--debug)          true;;
 		*)                false;;
 	esac
+}
+
+
+error_msg()
+{
+	printf "Error: %s\n" "$1" >&2
 }
 
 
@@ -138,7 +154,7 @@ while :; do
 			shift
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
-				echo "Error: missing argument after -c/--client"
+				error_msg "missing argument after -c/--client"
 				print_usage
 				exit 2
 			fi
@@ -150,7 +166,7 @@ while :; do
 			shift
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
-				echo "Error: missing argument after -d/--data"
+				error_msg "missing argument after -d/--data"
 				print_usage
 				exit 2
 			fi
@@ -162,7 +178,7 @@ while :; do
 			shift
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
-				echo "Error: missing argument after -e/--endpoint"
+				error_msg "missing argument after -e/--endpoint"
 				print_usage
 				exit 2
 			fi
@@ -183,7 +199,7 @@ while :; do
 			shift
 
 			if [ $# -eq 0 ] || is_arg "$1"; then
-				echo "Error: missing argument after -o/--output"
+				error_msg "missing argument after -o/--output"
 				print_usage
 				exit 2
 			fi
@@ -196,7 +212,7 @@ while :; do
 		;;
 
 		*)
-			echo "Error: unknown argument '$1'"
+			error_msg "unknown argument '$1'"
 			print_usage
 			exit 2
 		;;
@@ -213,7 +229,7 @@ done
 if [ ! -z "$data" ]; then
 	# Can't pass data in interactive mode
 	if [ $interactive = true ]; then
-		echo "Error: -d/--data can't be used with -i/--interactive"
+		error_msg "-d/--data can't be used with -i/--interactive"
 		print_usage
 		exit 2
 	fi
@@ -221,14 +237,14 @@ if [ ! -z "$data" ]; then
 	# In non-interactive mode, we still need to pass a client
 	# so the right API key is passed as a URL parameter
 	if [ -z "$client_option" ]; then
-		echo "Error: -c/--client is required to select an API key"
+		error_msg "-c/--client is required to select an API key"
 		print_usage
 		exit 2
 	fi
 
 	# Endpoint must be given if non-interactive mode
 	if [ -z "$endpoint_option" ]; then
-		echo "Error: In non-interactive mode, an endpoint must be passed with -e/--endpoint"
+		error_msg "In non-interactive mode, an endpoint must be passed with -e/--endpoint"
 		print_usage
 		exit 2
 	fi
@@ -236,16 +252,13 @@ fi
 
 if [ -z "$data" ] && [ $interactive = false ]; then
 	# Data must be given if non-interactive mode
-	echo "Error: In non-interactive mode, data must be passed with -d/--data"
+	error_msg "In non-interactive mode, data must be passed with -d/--data"
 	print_usage
 	exit 2
 fi
 
 if [ -z "$output" ] && [ $interactive = true ]; then
-	printf "\nIt is recommended to use --output in interactive mode.\nContinue? [y/N]: "
-	read -r confirm
-
-	if [ -z "$confirm" ]; then confirm="n"; fi
+	confirm=$(query_with_default "\nIt's recommended to use --output in interactive mode.\nContinue?" "No")
 
 	case $confirm in
 		[Yy]|[Yy][Ee][Ss]) ;;
@@ -261,8 +274,7 @@ fi
 if [ -z "$client_option" ]; then
 	if [ $interactive = true ]; then
 		print_clients
-		echo ""
-		client_option=$(query_with_default "Enter a client to use" "web")
+		client_option=$(query_with_default "\nEnter a client to use" "web")
 	else
 		exit 2
 	fi
@@ -325,7 +337,7 @@ case $client_option in
 	;;
 
 	*)
-		echo "Error: Unknown client '$client_option'"
+		error_msg "Unknown client '$client_option'"
 		print_clients
 		exit 1
 	;;
@@ -339,8 +351,7 @@ esac
 if [ -z "$endpoint_option" ]; then
 	if [ $interactive = true ]; then
 		print_endpoints
-		echo ""
-		endpoint_option=$(query_with_default "Enter an endpoint to request" "")
+		endpoint_option=$(query_with_default "\nEnter an endpoint to request" "")
 	else
 		exit 2
 	fi
@@ -407,7 +418,7 @@ case $endpoint_option in
 	;;
 
 	*)
-		echo "Error: Unknown endpoint '$endpoint_option'"
+		error_msg "Unknown endpoint '$endpoint_option'"
 		print_endpoints
 		exit 1
 	;;
@@ -471,25 +482,24 @@ if [ $interactive = true ]; then
 	if ! [ -z "$client_extra_form_factor" ]; then
 		client="${client},\"clientFormFactor\":\"${client_extra_form_factor}\""
 	fi
+
+
+	data="{\"context\":{\"client\":{$client}},$partial_data}"
+
+	# Basic debug
+	if [ $debug = true ]; then
+		if command -v jq >&2 >/dev/null; then
+			printf "\nSending: %s\n\n" "$data" | jq . >&2
+		else
+			printf "\nSending: %s\n\n" "$data" | sed 's/{/{\n/g; s/}/\n}/g; s/,/,\n/g' >&2
+		fi
+	fi
 fi
 
 
 #
 # Final command
 #
-
-if [ $interactive = true ]; then
-	data="{\"context\":{\"client\":{$client}},$partial_data}"
-
-	# Basic debug
-	if [ $debug = true ]; then
-		echo
-		echo "sending:"
-		echo "$data" | sed 's/{/{\n/g; s/}/\n}/g; s/,/,\n/g'
-		echo
-	fi
-fi
-
 
 url="https://www.youtube.com/${endpoint}?key=${apikey}"
 
