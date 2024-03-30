@@ -219,6 +219,97 @@ client_select()
 
 
 #
+# Endpoint selection function
+#
+
+endpoint_select()
+{
+	case "$1" in
+		browse)
+			endpoint="youtubei/v1/browse"
+
+			if [ $interactive = true ]; then
+				browse_id=$(query_with_default "Enter browse ID" "UCXuqSBlHAE6Xw-yeJA0Tunw")
+				endpoint_data="\"browseId\":\"${browse_id}\""
+			fi
+		;;
+
+		browse-cont*|browse-tok*)
+			endpoint="youtubei/v1/browse"
+
+			if [ $interactive = true ]; then
+				token=$(query_with_error "Enter continuation token" "token required")
+				endpoint_data="\"continuation\":\"${token}\""
+			fi
+		;;
+
+		player|next)
+			endpoint="youtubei/v1/$endpoint_option"
+
+			if [ $interactive = true ]; then
+				vid=$(query_with_default "Enter video ID" "dQw4w9WgXcQ")
+				endpoint_data="\"videoId\":\"${vid}\""
+
+			fi
+		;;
+
+		next-cont*|next-tok*)
+			endpoint="youtubei/v1/next"
+
+			if [ $interactive = true ]; then
+				token=$(query_with_error "Enter continuation token" "token required")
+				endpoint_data="\"continuation\":\"${token}\""
+			fi
+		;;
+
+		search)
+			endpoint="youtubei/v1/search"
+
+			if [ $interactive = true ]; then
+				# Get search query, and escape backslashes and double quotes
+				query=$(
+					query_with_error "Enter your search query" "search term required" |
+					sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+				)
+				endpoint_data="\"query\":\"${query}\""
+			fi
+		;;
+
+		resolve)
+			endpoint="youtubei/v1/navigation/resolve_url"
+
+			if [ $interactive = true ]; then
+				url=$(query_with_error "Enter URL" "URL required")
+				endpoint_data="\"url\":\"${url}\""
+			fi
+		;;
+
+		*)
+			error_msg "Unknown endpoint '$1'"
+			print_endpoints
+			exit 1
+		;;
+	esac
+
+
+	# Interactively request additional parameters for the supported endpoints
+	if [ $interactive = true ]
+	then
+		case "$1" in
+
+		browse|player|search)
+			params=$(query_with_default "Enter optional parameters (base64-encoded protobuf)" "")
+
+			if [ ! -z "$params" ]; then
+				endpoint_data="${endpoint_data},\"params\":\"${params}\""
+			fi
+		;;
+		esac
+	fi
+}
+
+
+#
 # Parameters init
 #
 
@@ -386,94 +477,10 @@ if [ -z "$endpoint_option" ]; then
 	fi
 fi
 
-case $endpoint_option in
-	browse)
-		endpoint="youtubei/v1/browse"
-
-		if [ $interactive = true ]; then
-			browse_id=$(query_with_default "Enter browse ID" "UCXuqSBlHAE6Xw-yeJA0Tunw")
-			partial_data="\"browseId\":\"${browse_id}\""
-		fi
-	;;
-
-	browse-cont*|browse-tok*)
-		endpoint="youtubei/v1/browse"
-
-		if [ $interactive = true ]; then
-			token=$(query_with_error "Enter continuation token" "token required")
-			partial_data="\"continuation\":\"${token}\""
-		fi
-	;;
-
-	player|next)
-		endpoint="youtubei/v1/$endpoint_option"
-
-		if [ $interactive = true ]; then
-			vid=$(query_with_default "Enter video ID" "dQw4w9WgXcQ")
-			partial_data="\"videoId\":\"${vid}\""
-
-		fi
-	;;
-
-	next-cont*|next-tok*)
-		endpoint="youtubei/v1/next"
-
-		if [ $interactive = true ]; then
-			token=$(query_with_error "Enter continuation token" "token required")
-			partial_data="\"continuation\":\"${token}\""
-		fi
-	;;
-
-	search)
-		endpoint="youtubei/v1/search"
-
-		if [ $interactive = true ]; then
-			# Get search query, and escape backslashes and double quotes
-			query=$(
-				query_with_error "Enter your search query" "search term required" |
-				sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
-			)
-			partial_data="\"query\":\"${query}\""
-		fi
-	;;
-
-	resolve)
-		endpoint="youtubei/v1/navigation/resolve_url"
-
-		if [ $interactive = true ]; then
-			url=$(query_with_error "Enter URL" "URL required")
-			partial_data="\"url\":\"${url}\""
-		fi
-	;;
-
-	*)
-		error_msg "Unknown endpoint '$endpoint_option'"
-		print_endpoints
-		exit 1
-	;;
-esac
-
-
-#
-# Interactively request additional parameters for the supported endpoints
-#
-
-if [ $interactive = true ]
-then
-	case $endpoint_option in
-
-	browse|player|search)
-		params=$(query_with_default "Enter optional parameters (base64-encoded protobuf)" "")
-
-		if [ ! -z "$params" ]; then
-			partial_data="${partial_data},\"params\":\"${params}\""
-		fi
-	;;
-	esac
-fi
-
 # new line
-echo
+echo >&2
+
+endpoint_select "$endpoint_option"
 
 
 #
@@ -513,7 +520,7 @@ if [ $interactive = true ]; then
 	fi
 
 
-	data="{\"context\":{\"client\":{$client}},$partial_data}"
+	data="{\"context\":{\"client\":{$client}},$endpoint_data}"
 
 	# Basic debug
 	if [ $debug = true ]; then
