@@ -5,6 +5,24 @@
 # more intuitive than `-n`
 
 
+#
+# Globals
+#
+
+ALL_CLIENTS="web
+web-embed
+web-mobile
+android
+android-embed
+apple-ios
+tv-html5
+tv-html5-embed"
+
+
+#
+# Utility functions
+#
+
 print_usage()
 {
 	(
@@ -41,14 +59,10 @@ print_clients()
 	(
 		echo ""
 		echo "Available clients:"
-		echo " - web"
-		echo " - web-embed"
-		echo " - web-mobile"
-		echo " - android"
-		echo " - android-embed"
-		echo " - apple-ios"
-		echo " - tv-html5"
-		echo " - tv-html5-embed"
+
+		for client in $ALL_CLIENTS; do
+			echo " - $client"
+		done
 	) >&2
 }
 
