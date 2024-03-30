@@ -136,6 +136,89 @@ error_msg()
 
 
 #
+# Client selection function
+#
+
+client_select()
+{
+	# Default API key, used by most clients
+	apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
+
+	# Default user-agent
+	user_agent="Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0"
+
+	# Reset values, in case this function is used multiple times
+	client_name=""
+	client_vers=""
+
+	client_extra_device_make=""
+	client_extra_device_model=""
+	client_extra_os_name=""
+	client_extra_os_vers=""
+	client_extra_platform=""
+	client_extra_form_factor=""
+
+
+	case "$1" in
+		web)
+			client_name="WEB"
+			client_vers="2.20230217.01.00"
+		;;
+
+		web-embed)
+			client_name="WEB_EMBEDDED_PLAYER"
+			client_vers="1.20230217.01.0"
+		;;
+
+		web-mobile)
+			client_name="MWEB"
+			client_vers="2.20230216.06.00"
+		;;
+
+		android)
+			apikey="AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w"
+			client_name="ANDROID"
+			client_vers="17.31.35"
+		;;
+
+		android-embed)
+			client_name="ANDROID_EMBEDDED_PLAYER"
+			client_vers="17.31.35"
+		;;
+
+		apple-ios)
+			apikey="AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc"
+			client_name="IOS"
+			client_vers="17.31.4"
+
+			client_extra_device_make="Apple"
+			client_extra_device_model="iPhone11,8"
+			client_extra_os_vers="15.2.0"
+
+			user_agent="com.google.ios.youtube/17.31.4 (iPhone11,8; U; CPU iOS 15_2 like Mac OS X; en_GB)"
+		;;
+
+		tv-html5)
+			client_name="TVHTML5"
+			client_vers="7.20220325"
+		;;
+
+		tv-html5-embed)
+			client_name="TVHTML5_SIMPLY_EMBEDDED_PLAYER"
+			client_vers="2.0"
+			screen="EMBED"
+		;;
+
+		*)
+			error_msg "Unknown client '$client_option'"
+			print_clients
+			exit 1
+		;;
+	esac
+}
+
+
+#
 # Parameters init
 #
 
@@ -144,13 +227,6 @@ debug=false
 
 client_option=""
 endpoint_option=""
-
-client_extra_device_make=""
-client_extra_device_model=""
-client_extra_os_name=""
-client_extra_os_vers=""
-client_extra_platform=""
-client_extra_form_factor=""
 
 data=""
 
@@ -294,68 +370,7 @@ if [ -z "$client_option" ]; then
 	fi
 fi
 
-case $client_option in
-	web)
-		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-		client_name="WEB"
-		client_vers="2.20230217.01.00"
-	;;
-
-	web-embed)
-		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-		client_name="WEB_EMBEDDED_PLAYER"
-		client_vers="1.20230217.01.0"
-	;;
-
-	web-mobile)
-		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-		client_name="MWEB"
-		client_vers="2.20230216.06.00"
-	;;
-
-	android)
-		apikey="AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w"
-		client_name="ANDROID"
-		client_vers="17.31.35"
-	;;
-
-	android-embed)
-		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-		client_name="ANDROID_EMBEDDED_PLAYER"
-		client_vers="17.31.35"
-	;;
-
-	apple-ios)
-		apikey="AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc"
-		client_name="IOS"
-		client_vers="17.31.4"
-
-		client_extra_device_make="Apple"
-		client_extra_device_model="iPhone11,8"
-		client_extra_os_vers="15.2.0"
-
-		user_agent="com.google.ios.youtube/17.31.4 (iPhone11,8; U; CPU iOS 15_2 like Mac OS X; en_GB)"
-	;;
-
-	tv-html5)
-		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-		client_name="TVHTML5"
-		client_vers="7.20220325"
-	;;
-
-	tv-html5-embed)
-		apikey="AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"
-		client_name="TVHTML5_SIMPLY_EMBEDDED_PLAYER"
-		client_vers="2.0"
-		screen="EMBED"
-	;;
-
-	*)
-		error_msg "Unknown client '$client_option'"
-		print_clients
-		exit 1
-	;;
-esac
+client_select "$client_option"
 
 
 #
@@ -519,13 +534,7 @@ url="https://www.youtube.com/${endpoint}?key=${apikey}"
 
 # Headers
 hdr_ct='Content-Type: application/json; charset=utf-8'
-
-if [ -z "$user_agent" ]; then
-	user_agent="Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0"
-fi
-
 hdr_ua="User-Agent: ${user_agent}"
-
 
 # Run!
 temp_dl=_curl_$(date '+%s')
