@@ -310,6 +310,57 @@ endpoint_select()
 
 
 #
+# Function to craft the client data
+#
+
+make_request_data()
+{
+	client="\"hl\":\"${hl}\",\"gl\":\"${gl}\""
+
+	client="${client},\"deviceMake\":\"${client_extra_device_make}\""
+	client="${client},\"deviceModel\":\"${client_extra_device_model}\""
+
+	if ! [ -z "$screen" ]; then
+		client="${client},\"clientScreen\":\"${screen}\""
+	fi
+
+	client="${client},\"clientName\":\"${client_name}\""
+	client="${client},\"clientVersion\":\"${client_vers}\""
+
+	if ! [ -z "$client_extra_os_name" ]; then
+		client="${client},\"osName\":\"${client_extra_os_name}\""
+	fi
+
+	if ! [ -z "$client_extra_os_vers" ]; then
+		client="${client},\"osVersion\":\"${client_extra_os_vers}\""
+	fi
+
+	if ! [ -z "$client_extra_platform" ]; then
+		client="${client},\"platform\":\"${client_extra_platform}\""
+	fi
+
+	if ! [ -z "$client_extra_form_factor" ]; then
+		client="${client},\"clientFormFactor\":\"${client_extra_form_factor}\""
+	fi
+
+
+	data="{\"context\":{\"client\":{$client}},$endpoint_data}"
+
+	# Basic debug
+	if [ $debug = true ]; then
+		if command -v jq >&2 >/dev/null; then
+			printf "\nSending: %s\n\n" "$data" | jq . >&2
+		else
+			printf "\nSending: %s\n\n" "$data" | sed 's/{/{\n/g; s/}/\n}/g; s/,/,\n/g' >&2
+		fi
+	fi
+
+	# Return data
+	printf "{\"context\":{\"client\":{%s}},%s}\n" "$client" "$endpoint_data"
+}
+
+
+#
 # Parameters init
 #
 
@@ -323,7 +374,7 @@ data=""
 
 
 #
-# Interactive client selection
+# Parse arguments
 #
 
 while :; do
@@ -449,7 +500,7 @@ fi
 
 
 #
-# Client selection
+# Required parameters. Ask if not provided
 #
 
 if [ -z "$client_option" ]; then
@@ -460,13 +511,6 @@ if [ -z "$client_option" ]; then
 		exit 2
 	fi
 fi
-
-client_select "$client_option"
-
-
-#
-# Endpoint selection
-#
 
 if [ -z "$endpoint_option" ]; then
 	if [ $interactive = true ]; then
@@ -480,62 +524,24 @@ fi
 # new line
 echo >&2
 
-endpoint_select "$endpoint_option"
-
-
-#
 # Interactive language/region selection
-#
-
 if [ $interactive = true ]; then
 	hl=$(query_with_default "Enter content language (hl)" "en")
 	gl=$(query_with_default "Enter content region (gl)"   "US")
-
-	client="\"hl\":\"${hl}\",\"gl\":\"${gl}\""
-
-	client="${client},\"deviceMake\":\"${client_extra_device_make}\""
-	client="${client},\"deviceModel\":\"${client_extra_device_model}\""
-
-	if ! [ -z "$screen" ]; then
-		client="${client},\"clientScreen\":\"${screen}\""
-	fi
-
-	client="${client},\"clientName\":\"${client_name}\""
-	client="${client},\"clientVersion\":\"${client_vers}\""
-
-	if ! [ -z "$client_extra_os_name" ]; then
-		client="${client},\"osName\":\"${client_extra_os_name}\""
-	fi
-
-	if ! [ -z "$client_extra_os_vers" ]; then
-		client="${client},\"osVersion\":\"${client_extra_os_vers}\""
-	fi
-
-	if ! [ -z "$client_extra_platform" ]; then
-		client="${client},\"platform\":\"${client_extra_platform}\""
-	fi
-
-	if ! [ -z "$client_extra_form_factor" ]; then
-		client="${client},\"clientFormFactor\":\"${client_extra_form_factor}\""
-	fi
-
-
-	data="{\"context\":{\"client\":{$client}},$endpoint_data}"
-
-	# Basic debug
-	if [ $debug = true ]; then
-		if command -v jq >&2 >/dev/null; then
-			printf "\nSending: %s\n\n" "$data" | jq . >&2
-		else
-			printf "\nSending: %s\n\n" "$data" | sed 's/{/{\n/g; s/}/\n}/g; s/,/,\n/g' >&2
-		fi
-	fi
 fi
 
 
 #
-# Final command
+# Run the request
 #
+
+client_select "$client_option"
+endpoint_select "$endpoint_option"
+
+if [ $interactive = true ]; then
+	data=$(make_request_data)
+fi
+
 
 url="https://www.youtube.com/${endpoint}?key=${apikey}"
 
