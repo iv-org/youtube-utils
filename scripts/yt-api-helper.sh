@@ -228,7 +228,7 @@ endpoint_select()
 		browse)
 			endpoint="youtubei/v1/browse"
 
-			if [ $interactive = true ]; then
+			if [ "$interactive" = true ]; then
 				browse_id=$(query_with_default "Enter browse ID" "UCXuqSBlHAE6Xw-yeJA0Tunw")
 				endpoint_data="\"browseId\":\"${browse_id}\""
 			fi
@@ -237,7 +237,7 @@ endpoint_select()
 		browse-cont*|browse-tok*)
 			endpoint="youtubei/v1/browse"
 
-			if [ $interactive = true ]; then
+			if [ "$interactive" = true ]; then
 				token=$(query_with_error "Enter continuation token" "token required")
 				endpoint_data="\"continuation\":\"${token}\""
 			fi
@@ -246,7 +246,7 @@ endpoint_select()
 		player|next)
 			endpoint="youtubei/v1/$endpoint_option"
 
-			if [ $interactive = true ]; then
+			if [ "$interactive" = true ]; then
 				vid=$(query_with_default "Enter video ID" "dQw4w9WgXcQ")
 				endpoint_data="\"videoId\":\"${vid}\""
 
@@ -256,7 +256,7 @@ endpoint_select()
 		next-cont*|next-tok*)
 			endpoint="youtubei/v1/next"
 
-			if [ $interactive = true ]; then
+			if [ "$interactive" = true ]; then
 				token=$(query_with_error "Enter continuation token" "token required")
 				endpoint_data="\"continuation\":\"${token}\""
 			fi
@@ -265,7 +265,7 @@ endpoint_select()
 		search)
 			endpoint="youtubei/v1/search"
 
-			if [ $interactive = true ]; then
+			if [ "$interactive" = true ]; then
 				# Get search query, and escape backslashes and double quotes
 				query=$(
 					query_with_error "Enter your search query" "search term required" |
@@ -278,7 +278,7 @@ endpoint_select()
 		resolve)
 			endpoint="youtubei/v1/navigation/resolve_url"
 
-			if [ $interactive = true ]; then
+			if [ "$interactive" = true ]; then
 				url=$(query_with_error "Enter URL" "URL required")
 				endpoint_data="\"url\":\"${url}\""
 			fi
@@ -293,7 +293,7 @@ endpoint_select()
 
 
 	# Interactively request additional parameters for the supported endpoints
-	if [ $interactive = true ]
+	if [ "$interactive" = true ]
 	then
 		case "$1" in
 
@@ -347,7 +347,7 @@ make_request_data()
 	data="{\"context\":{\"client\":{$client}},$endpoint_data}"
 
 	# Basic debug
-	if [ $debug = true ]; then
+	if [ "$debug" = true ]; then
 		if command -v jq >&2 >/dev/null; then
 			printf "\nSending: %s\n\n" "$data" | jq . >&2
 		else
@@ -494,7 +494,7 @@ done
 
 if [ ! -z "$data" ]; then
 	# Can't pass data in interactive mode
-	if [ $interactive = true ]; then
+	if [ "$interactive" = true ]; then
 		error_msg "-d/--data can't be used with -i/--interactive"
 		print_usage
 		exit 2
@@ -516,14 +516,14 @@ if [ ! -z "$data" ]; then
 	fi
 fi
 
-if [ -z "$data" ] && [ $interactive = false ]; then
+if [ -z "$data" ] && [ "$interactive" = false ]; then
 	# Data must be given if non-interactive mode
 	error_msg "In non-interactive mode, data must be passed with -d/--data"
 	print_usage
 	exit 2
 fi
 
-if [ -z "$output" ] && [ $interactive = true ]; then
+if [ -z "$output" ] && [ "$interactive" = true ]; then
 	confirm=$(query_with_default "\nIt's recommended to use --output in interactive mode.\nContinue?" "No")
 
 	case $confirm in
@@ -538,7 +538,7 @@ fi
 #
 
 if [ -z "$client_option" ]; then
-	if [ $interactive = true ]; then
+	if [ "$interactive" = true ]; then
 		print_clients
 		client_option=$(query_with_default "\nEnter a client to use" "web")
 	else
@@ -547,7 +547,7 @@ if [ -z "$client_option" ]; then
 fi
 
 if [ -z "$endpoint_option" ]; then
-	if [ $interactive = true ]; then
+	if [ "$interactive" = true ]; then
 		print_endpoints
 		endpoint_option=$(query_with_default "\nEnter an endpoint to request" "")
 	else
@@ -559,7 +559,7 @@ fi
 echo >&2
 
 # Interactive language/region selection
-if [ $interactive = true ]; then
+if [ "$interactive" = true ]; then
 	hl=$(query_with_default "Enter content language (hl)" "en")
 	gl=$(query_with_default "Enter content region (gl)"   "US")
 fi
@@ -584,7 +584,7 @@ if [ "$client_option" = "all" ]; then
 	for client_name in $ALL_CLIENTS; do
 		client_select "$client_name"
 
-		if [ $interactive = true ]; then
+		if [ "$interactive" = true ]; then
 			data=$(make_request_data)
 		fi
 
@@ -594,7 +594,7 @@ else
 	# Run the client selection and request only once
 	client_select "$client_option"
 
-	if [ $interactive = true ]; then
+	if [ "$interactive" = true ]; then
 		data=$(make_request_data);
 	fi
 
