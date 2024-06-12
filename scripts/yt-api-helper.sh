@@ -569,11 +569,34 @@ fi
 # Run the request
 #
 
-client_select "$client_option"
+# Only ran once (this requests some additional data in interactive mode)
 endpoint_select "$endpoint_option"
 
-if [ $interactive = true ]; then
-	data=$(make_request_data)
-fi
+if [ "$client_option" = "all" ]; then
+	# Run the client selector (get client-specific infos) and request for each client
+	if [ -z "$output" ]; then
+		printf "\nAll clients requested, response will be written to output file anyway\n" >&2
+		output=response-$endpoint_option.$(date '+%s')
+	else
+		output=$(basename "$output" ".json")
+	fi
 
-send_request "$data" "$output"
+	for client_name in $ALL_CLIENTS; do
+		client_select "$client_name"
+
+		if [ $interactive = true ]; then
+			data=$(make_request_data)
+		fi
+
+		send_request "$data" "$output.$client_name.json"
+	done
+else
+	# Run the client selection and request only once
+	client_select "$client_option"
+
+	if [ $interactive = true ]; then
+		data=$(make_request_data);
+	fi
+
+	send_request "$data" "$output"
+fi
